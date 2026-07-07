@@ -203,53 +203,6 @@ ggplot(dfvg_gm, aes(x = Parasitemia, y = FoldChange, fill = Parasitemia)) +
     strip.text = element_text(face = "bold", color = "black", size = 10)
   )
 
-view(dfvg_gm)
-
-# Loading sorted data
-
-dfvg <- read.csv("Final_BoxplotData.csv")
-View(dfvg)
-# Assigning significance stars
-get_stars <- function(p) {
-  if (is.na(p)) return("NA")
-  if (p < 0.001) return("***")
-  else if (p < 0.01) return("**")
-  else if (p < 0.05) return("*")
-  else return("ns")
-}
-
-# Re-running normality test per group
-stats <- dfvg %>%
-  group_by(goi, Parasitemia) %>%
-  summarise(
-    shapiro_p = tryCatch(shapiro.test(FoldChange)$p.value, error = function(e) NA),
-    test_p = if (!is.na(shapiro_p[1]) && shapiro_p[1] > 0.05) {
-      t.test(FoldChange, mu = 1)$p.value
-    } else {
-      wilcox.test(FoldChange, mu = 1)$p.value
-    },
-    stars = get_stars(test_p),
-    y_pos = max(FoldChange, na.rm = TRUE) * 1.05,
-    .groups = "drop"
-  )
-
-# Plotting all boxplots and facet wrapping
-
-ggplot(dfvg, aes(x = Parasitemia, y = FoldChange, fill = Parasitemia)) +
-  geom_boxplot(position = position_dodge(width = 0.8), outlier.shape = NA) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.8), alpha = 0.7) +
-  geom_text(data = stats, aes(x = Parasitemia, y = y_pos, label = stars, group = Parasitemia),
-            position = position_dodge(width = 0.8), vjust = 0) +
-  geom_hline(yintercept = 1, linetype = "dotted", color = "black", linewidth = 0.6) +
-  facet_wrap(~ goi, scales = "free_y") +
-  scale_fill_manual(values = c("high" = "lightblue", "low" = "lightgreen")) +
-  labs(title = "Gene Expression per Gene",
-       y = "Relative Expression (2^-ΔΔCt)", x = "Groups") +
-  theme_minimal() +
-  theme(
-    legend.position = "right",
-    strip.text = element_text(face = "bold", size = 10, color = "darkred")
-  )
 
 ##DONE##
 
